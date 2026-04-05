@@ -1,7 +1,11 @@
 import {create} from "zustand";
-import type { Pages } from "@/types/pages";
 
-const usePagesStore=create<Pages>((set)=>({
+interface PagesStore {
+    currentPage:string;
+    setCurrentPage:(page:string)=>void;
+}
+
+const usePagesStore=create<PagesStore>((set)=>({
     currentPage:'home',
     setCurrentPage:(page:string)=>set({currentPage:page}),
 }));

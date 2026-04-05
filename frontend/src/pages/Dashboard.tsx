@@ -1,8 +1,8 @@
-import useAuthStore from "@/stores/authStore";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import SideBar from "@/components/SideBar";
 import usePagesStore from "@/stores/pagesStore";
 import Home from "./DashboardPages/Home";
+import Library from "./DashboardPages/Library";
 
 const Dashboard = () => {
     const {currentPage}=usePagesStore();
@@ -18,6 +18,7 @@ const Dashboard = () => {
                     <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                         {/* Content would go here based on usePagesStore */}
                         {currentPage==="home" && <Home/>}
+                        {currentPage==="library" && <Library/>}
                     </div>
                 </main>
             </SidebarProvider>
