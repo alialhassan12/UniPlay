@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class authController extends Controller
 {
@@ -15,18 +17,26 @@ class authController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
         ]);
-        $hashPassword=Hash::make($request->password);
-        $user=User::create([
-            'name'=>$request->name,
-            'email'=>$request->email,
-            'password'=>$hashPassword,
-        ]);
-        $token=$user->createToken('auth_token')->plainTextToken;
-        return response()->json([
-            'message' => 'User created successfully',
-            'user' => $user,
-            'token' => $token,
-        ]);
+        try{
+            $hashPassword=Hash::make($request->password);
+            $user=User::create([
+                'name'=>$request->name,
+                'email'=>$request->email,
+                'password'=>$hashPassword,
+            ]);
+            $token=$user->createToken('auth_token')->plainTextToken;
+            return response()->json([
+                'message' => 'User created successfully',
+                'user' => $user,
+                'token' => $token,
+            ]);
+        }catch(Exception $e){
+            Log::error($e->getMessage());
+            return response()->json([
+                'message' => 'User creation failed',
+            ],500);
+        }
+        
     }
     public function login(Request $request){
         $request->validate([
@@ -52,9 +62,23 @@ class authController extends Controller
         ]);
     }
     public function logout(Request $request){
-        $request->user()->currentAccessToken()->delete();
+        try{
+            $request->user()->currentAccessToken()->delete();
+            return response()->json([
+                'message' => 'User logged out successfully',
+            ],200);
+        }catch(Exception $e){
+            Log::error($e->getMessage());
+            return response()->json([
+                'message' => 'User logout failed',
+            ],500);
+        }
+    }
+
+    public function checkAuth(Request $request){
         return response()->json([
-            'message' => 'User logged out successfully',
-        ]);
+            'message' => 'User is authenticated',
+            'user' => $request->user(),
+        ],200);
     }
 }

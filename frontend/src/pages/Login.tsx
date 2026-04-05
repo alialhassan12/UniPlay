@@ -1,8 +1,38 @@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Mail, Lock, Code, Globe, ArrowRight } from "lucide-react"
+import useAuthStore from "@/stores/authStore"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 const Login = () => {
+    const {login,isLoggingIn}=useAuthStore();
+    const navigate=useNavigate();
+    const [formData,setFormData]=useState<{email:string,password:string}>({
+        email:"",
+        password:""
+    });
+    const [errors,setErrors]=useState<{email:string,password:string}>({
+        email:"",
+        password:""
+    });
+    const handleSubmit=async()=>{
+        setErrors({email:"",password:""});
+        const emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(formData.email)){
+            setErrors({...errors,email:"Invalid email"});
+            return;
+        }
+        if(formData.password.length < 8){
+            setErrors({...errors,password:"Password must be at least 8 characters long"});
+            return;
+        }
+        const res=await login(formData);
+        if(res){
+            navigate("/home");
+        }
+    }
+
     return (
         <div className="relative flex justify-center items-center min-h-screen bg-[#0a0a0a] overflow-hidden font-sansSelection">
             {/* Mesh Gradient Background */}
@@ -35,10 +65,13 @@ const Login = () => {
                                 <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#1DB954] transition-colors" />
                                 <Input 
                                     type="email"
+                                    value={formData.email}
+                                    onChange={(e)=>{setFormData({...formData,email:e.target.value})}}
                                     placeholder="your@email.com" 
                                     className="pl-11 h-12 bg-[#1c1c1c] border-white/5 focus-visible:bg-[#222222] text-white rounded-xl transition-all" 
                                 />
                             </div>
+                            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -50,15 +83,27 @@ const Login = () => {
                                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#1DB954] transition-colors" />
                                 <Input 
                                     type="password"
+                                    value={formData.password}
+                                    onChange={(e)=>{setFormData({...formData,password:e.target.value})}}
                                     placeholder="••••••••" 
                                     className="pl-11 h-12 bg-[#1c1c1c] border-white/5 focus-visible:bg-[#222222] text-white rounded-xl transition-all" 
                                 />
                             </div>
+                            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
                         </div>
 
-                        <Button className="w-full h-12 mt-2 bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-base rounded-full shadow-lg shadow-[#1DB954]/20 transition-all active:scale-[0.98] group">
-                            Sign In
-                            <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                        <Button 
+                            className="w-full h-12 mt-2 bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-base rounded-full shadow-lg shadow-[#1DB954]/20 transition-all active:scale-[0.98] group"
+                            onClick={handleSubmit}
+                            disabled={isLoggingIn}
+                            >
+                            {isLoggingIn
+                                ?<span className="loading loading-ring loading-xl"></span>
+                                :<>
+                                    Sign In
+                                    <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                                </>
+                            }
                         </Button>
                     </form>
 

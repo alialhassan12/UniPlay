@@ -1,8 +1,60 @@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { User, Mail, Lock, Code, Globe, ArrowRight } from "lucide-react"
+import { useState } from "react"
+import useAuthStore from "@/stores/authStore"
+import { useNavigate } from "react-router-dom"
 
 const Register = () => {
+    const navigate=useNavigate();
+    const [formData,setFormData]=useState<{name:string,email:string,password:string,confirmPassword:string}>({
+        name:"",
+        email:"",
+        password:"",
+        confirmPassword:""
+    });
+    const [errors,setErrors]=useState<{name:string,email:string,password:string,confirmPassword:string}>({
+        name:"",
+        email:"",
+        password:"",
+        confirmPassword:""
+    });
+    const {register,isRegistering}=useAuthStore();
+    
+    const handleSubmit=async()=>{
+        if(formData.name === "" || formData.email === "" || formData.password === "" || formData.confirmPassword === ""){
+            setErrors({...errors,
+                    name:formData.name===""?"Name cant be empty":"",
+                    email:formData.email===""?"Email cant be empty":"",
+                    password:formData.password===""?"Password cant be empty":"",
+                    confirmPassword:formData.confirmPassword===""?"ConfirmPassword cant be empty":""
+                });
+            return;
+        }
+        const emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if(!emailRegex.test(formData.email)){
+            setErrors({...errors,email:"Invalid email"});
+            return;
+        }
+        if(formData.password !== formData.confirmPassword){
+            setErrors({...errors,confirmPassword:"Passwords do not match"});
+            return;
+        }
+        if(formData.password.length < 8){
+            setErrors({...errors,password:"Password must be at least 8 characters long"});
+            return;
+        }
+        if(formData.name.length < 3){
+            setErrors({...errors,name:"Name must be at least 3 characters long"});
+            return;
+        }
+        setErrors({name:"",email:"",password:"",confirmPassword:""});
+        const res=await register({name:formData.name,email:formData.email,password:formData.password});
+        if(res){
+            navigate("/home");
+        }
+    }
+
     return (
         <div className="relative flex justify-center items-center min-h-screen bg-[#0a0a0a] overflow-hidden font-sansSelection">
             {/* Mesh Gradient Background */}
@@ -35,9 +87,12 @@ const Register = () => {
                                 <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#1DB954] transition-colors" />
                                 <Input 
                                     placeholder="Your name" 
+                                    value={formData.name}
+                                    onChange={(e)=>setFormData({...formData,name:e.target.value})}
                                     className="pl-11 h-12 bg-[#1c1c1c] border-white/5 focus-visible:bg-[#222222] text-white rounded-xl transition-all" 
                                 />
                             </div>
+                            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -45,11 +100,13 @@ const Register = () => {
                             <div className="relative group">
                                 <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#1DB954] transition-colors" />
                                 <Input 
-                                    type="email"
                                     placeholder="example@gmail.com" 
+                                    value={formData.email}
+                                    onChange={(e)=>setFormData({...formData,email:e.target.value})}
                                     className="pl-11 h-12 bg-[#1c1c1c] border-white/5 focus-visible:bg-[#222222] text-white rounded-xl transition-all" 
                                 />
                             </div>
+                            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -59,14 +116,40 @@ const Register = () => {
                                 <Input 
                                     type="password"
                                     placeholder="••••••••" 
+                                    value={formData.password}
+                                    onChange={(e)=>setFormData({...formData,password:e.target.value})}
                                     className="pl-11 h-12 bg-[#1c1c1c] border-white/5 focus-visible:bg-[#222222] text-white rounded-xl transition-all" 
                                 />
                             </div>
+                            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-white/40 tracking-wider ml-1 uppercase">Confirm Password</label>
+                            <div className="relative group">
+                                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#1DB954] transition-colors" />
+                                <Input 
+                                    type="password"
+                                    placeholder="••••••••" 
+                                    value={formData.confirmPassword}
+                                    onChange={(e)=>setFormData({...formData,confirmPassword:e.target.value})}
+                                    className="pl-11 h-12 bg-[#1c1c1c] border-white/5 focus-visible:bg-[#222222] text-white rounded-xl transition-all" 
+                                />
+                            </div>
+                            {errors.confirmPassword && <p className="text-red-500 text-sm">{errors.confirmPassword}</p>}
                         </div>
 
-                        <Button className="w-full h-12 mt-2 bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-base rounded-full shadow-lg shadow-[#1DB954]/20 transition-all active:scale-[0.98] group">
-                            Create Account
-                            <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={isRegistering}
+                            className="w-full h-12 mt-2 bg-[#1DB954] hover:bg-[#1ed760] text-black font-bold text-base rounded-full shadow-lg shadow-[#1DB954]/20 transition-all active:scale-[0.98] group">
+                            {isRegistering
+                                ?<span className="loading loading-ring loading-xl"></span>
+                                :<>
+                                    Create Account
+                                    <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                                </>
+                            }
                         </Button>
                     </form>
 
