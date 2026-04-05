@@ -10,7 +10,7 @@ interface AuthStore{
     login:({email,password}:{email:string,password:string})=>Promise<boolean>;
     isLoggingIn:boolean
     logout:()=>Promise<void>;
-    isLogginOut:boolean
+    isLoggingOut:boolean
     register:({name,email,password}:{name:string,email:string,password:string})=>Promise<boolean>;
     isRegistering:boolean
     checkAuth:()=>Promise<boolean>;
@@ -58,9 +58,9 @@ const useAuthStore =create<AuthStore>((set)=>({
         }
     },
 
-    isLogginOut:false,
+    isLoggingOut:false,
     logout:async ()=>{
-        set({isLogginOut:true});
+        set({isLoggingOut:true});
         try {
             const response=await axiosInstance.post("/logout");
             localStorage.removeItem("token");
@@ -69,7 +69,7 @@ const useAuthStore =create<AuthStore>((set)=>({
         } catch (error:any) {
             toast.error(error.response.data.message,{position:"bottom-right"});
         } finally{
-            set({isLogginOut:false});
+            set({isLoggingOut:false});
         }
     },
 
