@@ -10,7 +10,12 @@ class Playlist extends Model
         'user_id',
         'name'
     ];
+    
     public function user(){
         return $this->belongsTo(User::class);
+    }
+
+    public function audios(){
+        return $this->hasMany(Audios::class);
     }
 }

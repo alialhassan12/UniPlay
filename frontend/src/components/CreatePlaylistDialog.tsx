@@ -7,7 +7,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import { Input } from "./ui/input";
 import { useState } from "react";
 import usePlaylistsStore from "@/stores/playlistsStore";
@@ -19,9 +19,9 @@ const CreatePlaylistDialog =({open,onOpenChange}:{open:boolean,onOpenChange:(ope
     const{authUser}=useAuthStore();
     const {createPlaylist,isCreatingPlaylist}=usePlaylistsStore();
     
-    const handlePlaylistCreation=()=>{
+    const handlePlaylistCreation=async ()=>{
         if(authUser){
-            createPlaylist(authUser.id,playlistName);
+            await createPlaylist(authUser.id,playlistName);
         }else{
             toast.error('User not found');
         }

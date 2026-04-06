@@ -3,6 +3,7 @@ import SideBar from "@/components/SideBar";
 import usePagesStore from "@/stores/pagesStore";
 import Home from "./DashboardPages/Home";
 import Library from "./DashboardPages/Library";
+import Playlist from "./DashboardPages/Playlist";
 
 const Dashboard = () => {
     const {currentPage}=usePagesStore();
@@ -19,6 +20,8 @@ const Dashboard = () => {
                         {/* Content would go here based on usePagesStore */}
                         {currentPage==="home" && <Home/>}
                         {currentPage==="library" && <Library/>}
+                        {currentPage==="playlist" && <Playlist/>}
+                        
                     </div>
                 </main>
             </SidebarProvider>

@@ -11,6 +11,8 @@ interface PlaylistsStore {
     isCreatingPlaylist:boolean;
     getUserPlaylists:()=>void;
     isFetchingPlaylists:boolean;
+    selectedPLaylist:PlayList |null;
+    setSelectedPlaylist:(playlist:PlayList)=>void;
 }
 
 const usePlaylistsStore = create<PlaylistsStore>((set) => ({
@@ -46,7 +48,10 @@ const usePlaylistsStore = create<PlaylistsStore>((set) => ({
         } finally{
             set({isFetchingPlaylists:false});
         }
-    }
+    },
+
+    selectedPLaylist:null,
+    setSelectedPlaylist:(playlist:PlayList)=>set({selectedPLaylist:playlist}),
 }));
 
 export default usePlaylistsStore;

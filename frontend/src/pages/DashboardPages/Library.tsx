@@ -9,10 +9,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import CreatePlaylistDialog from "@/components/CreatePlaylistDialog";
 import { useEffect, useState } from "react";
 import usePlaylistsStore from "@/stores/playlistsStore";
+import usePagesStore from "@/stores/pagesStore";
 
 const Library=()=>{
     const [openCreateDialog,setOpenCreateDialog]=useState<boolean>(false);
-    const {playlists,getUserPlaylists,isFetchingPlaylists}=usePlaylistsStore();
+    const {playlists,getUserPlaylists,isFetchingPlaylists,setSelectedPlaylist}=usePlaylistsStore();
+    const {setCurrentPage}=usePagesStore();
+
     useEffect(()=>{
         getUserPlaylists();
     },[]);
@@ -32,10 +35,17 @@ const Library=()=>{
                 }
                 {playlists.map((playlist)=>{
                     return(
-                        <div key={playlist.id} className="flex flex-col text-center">
-                            <div className="w-48 h-48 bg-gradient-to-br from-[#1DB954] to-emerald-400 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-2">
-                                <div className="w-6 h-1 bg-white rounded-full rotate-45 translate-y-1" />
-                                <div className="w-4 h-1 bg-white/80 rounded-full -rotate-45 -translate-x-1" />
+                        <div 
+                            key={playlist.id} 
+                            onClick={()=>{
+                                setSelectedPlaylist(playlist);
+                                setCurrentPage("playlist");
+                            }}
+                            className="flex flex-col text-center hover:scale-105 transition-all duration-300 ease-in-out cursor-pointer group"
+                        >
+                            <div className="w-48 h-48 bg-gradient-to-br from-[#1DB954] to-emerald-400 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all duration-300 ease-in-out mb-2 cursor-pointer">
+                                <div className="w-6 h-1 bg-white rounded-full rotate-45 translate-y-1 group-hover:translate-y-1 transition-all duration-300 ease-in-out" />
+                                <div className="w-4 h-1 bg-white/80 rounded-full -rotate-45 -translate-x-1 group-hover:translate-y-1 transition-all duration-300 ease-in-out" />
                             </div>
                             <p className="text-white text-sm font-bold">{playlist.name}</p>
                         </div>
@@ -48,9 +58,10 @@ const Library=()=>{
                         <TooltipTrigger>
                             <div 
                                 onClick={()=>setOpenCreateDialog(true)}
-                                className="w-48 h-48 bg-gradient-to-br from-[#121212] to-[#121212] rounded-2xl flex items-center justify-center shadow-lg hover:shadow-white/20 transition-all duration-300 ease-in-out mb-2 cursor-pointer">
+                                className="w-48 h-48 bg-gradient-to-br from-[#121212] to-[#121212] rounded-2xl flex items-center justify-center shadow-lg hover:shadow-white/20 hover:scale-105 transition-all duration-300 ease-in-out mb-2 cursor-pointer">
                                 <Plus className="w-12 h-12 text-white" />
-                            </div> 
+                            </div>
+                            <p className="text-white text-sm font-bold">Create Playlist</p>
                         </TooltipTrigger>
                         <TooltipContent side="right">
                             <p className="text-black font-bold bg-[#1DB954] rounded-full px-2 py-1">Create Playlist</p>
