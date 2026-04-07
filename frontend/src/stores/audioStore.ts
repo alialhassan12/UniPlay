@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 interface audioStore{
     audios:Audio[];
     setAudios:(audios:Audio[])=>void;
+    selectedAudio:Audio | null;
+    setSelectedAudio:(audio:Audio | null)=>void;
     addAudio:({playlist_id,title,audio_url}:{playlist_id:number,title:string,audio_url:string})=>void;
     isAddingAudio:boolean;
     getAudios:(playlist_id:number)=>void;
@@ -46,7 +48,10 @@ const useAudioStore=create<audioStore>((set)=>({
         } finally{
             set({isGettingAudios:false});
         }
-    }
+    },
+    
+    selectedAudio:null,
+    setSelectedAudio:(audio:Audio | null)=>set({selectedAudio:audio})
 }));
 
 export default useAudioStore;

@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const Playlist = () => {
     const { selectedPLaylist } = usePlaylistsStore();
-    const { audios,getAudios,isGettingAudios } = useAudioStore();
+    const { audios,getAudios,isGettingAudios,setSelectedAudio } = useAudioStore();
     const [openAddAudioDialog,setOpenAddAudioDialog]=useState(false);
     
     useEffect(()=>{
@@ -42,7 +42,7 @@ const Playlist = () => {
                     <span className="text-white/70 uppercase text-xs font-bold tracking-widest">Playlist</span>
                     <h1 className="text-white text-5xl md:text-7xl font-black">{selectedPLaylist?.name || "Select a Playlist"}</h1>
                     <div className="flex items-center gap-2 text-white/60 text-sm mt-4">
-                        <span className="font-bold text-white">Your Username</span>
+                        <span className="font-bold text-white">{}</span>
                         <span>•</span>
                         <span>{audios.length} {audios.length === 1 ? 'audio' : 'audios'}</span>
                     </div>
@@ -115,6 +115,7 @@ const Playlist = () => {
                             {audios.map((audio, index) => (
                                 <TableRow 
                                     key={audio.id} 
+                                    onClick={()=>setSelectedAudio(audio)}
                                     className="group border-none hover:bg-white/5 transition-all cursor-pointer rounded-lg"
                                 >
                                     <TableCell className="text-white/50 font-medium group-hover:text-emerald-500 transition-colors">
