@@ -1,7 +1,7 @@
 import AudioPlayer from "react-h5-audio-player";
 import "react-h5-audio-player/lib/styles.css";
 import useAudioStore from "@/stores/audioStore";
-import { Cross, Music, X } from "lucide-react";
+import { Music, X } from "lucide-react";
 import { Button } from "./ui/button";
 
 const CustomAudioPlayer = () => {

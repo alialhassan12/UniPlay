@@ -19,4 +19,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // audios routes
     Route::post('/audio/add',[audioController::class,'addAudio'])->name('addAudio');
     Route::get('/audio/{playlist_id}',[audioController::class,'getAudios'])->name('getAudios');
+    Route::post('/audio/upload',[audioController::class,'uploadAudioFile'])->name('uploadAudioFile');
 });

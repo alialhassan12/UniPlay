@@ -12,6 +12,9 @@ interface audioStore{
     isAddingAudio:boolean;
     getAudios:(playlist_id:number)=>void;
     isGettingAudios:boolean;
+    uploadAudioFile:({playlist_id,title,audio_file}:{playlist_id:number,title:string,audio_file:File})=>void;
+    isUploadingAudioFile:boolean;
+    uploadProgress:number;
 }
 
 const useAudioStore=create<audioStore>((set)=>({
@@ -51,7 +54,39 @@ const useAudioStore=create<audioStore>((set)=>({
     },
     
     selectedAudio:null,
-    setSelectedAudio:(audio:Audio | null)=>set({selectedAudio:audio})
+    setSelectedAudio:(audio:Audio | null)=>set({selectedAudio:audio}),
+
+    isUploadingAudioFile:false,
+    uploadProgress:0,
+    uploadAudioFile:async({playlist_id,title,audio_file}:{
+        playlist_id:number,
+        title:string,
+        audio_file:File
+    })=>{
+        set({isUploadingAudioFile:true});
+        try {
+            // create form data to send file for laravel so it can process it
+            const formData = new FormData();
+            formData.append('playlist_id', playlist_id.toString());
+            formData.append('title', title);
+            formData.append('audio_file', audio_file);
+
+            const response=await axiosInstance.post('/audio/upload', formData,{
+                onUploadProgress(progressEvent) {
+                    if(!progressEvent.total) return;
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total));
+                    set({uploadProgress:percentCompleted});
+                },
+            });
+            set((state)=>({audios:[...state.audios,response.data.audio]}));
+            toast.success("Audio uploaded successfully!");
+        } catch (error:any) {
+            console.log(error);
+            toast.error(error?.response?.data?.message);
+        } finally{
+            set({isUploadingAudioFile:false});
+        }
+    },
 }));
 
 export default useAudioStore;

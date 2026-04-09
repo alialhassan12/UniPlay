@@ -3,13 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Audio;
 use App\Models\Audios;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class audioController extends Controller
 {
@@ -87,6 +84,35 @@ class audioController extends Controller
         $audios=Audios::where('playlist_id',$playlist_id)->get();
         return response()->json([
             'audios'=>$audios
+        ]);
+    }
+
+    public function uploadAudioFile(Request $request){
+        $request->validate([
+            "playlist_id" => 'required|exists:playlists,id',
+            "title" => 'required|string',
+            "duration" => 'nullable|integer',
+            "audio_file"=>'required|file|mimes:mp3,wav,m4a,aac,ogg,flac,webm'
+        ]);
+        // upload to cloudinary
+        $cloudinary=new CloudinaryService();
+        $audio_url=$cloudinary->uploadAudio($request->file('audio_file')->getRealPath());
+        if(!$audio_url){
+            Log::error('Failed to upload audio to Cloudinary storage.');
+            return response()->json([
+                'message'=>"Failed to upload audio"
+            ],500);
+        }
+        // save to database
+        $audio=Audios::create([
+            'playlist_id'=>$request->playlist_id,
+            'title'=>$request->title,
+            'duration'=>$request->duration ?? 0,
+            'audio_url'=>$audio_url,
+        ]);
+        return response()->json([
+            'message'=>"Audio added successfully",
+            'audio'=>$audio,
         ]);
     }
 }
