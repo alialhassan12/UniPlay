@@ -40,11 +40,21 @@ const Playlist = () => {
                 </div>
                 <div className="flex flex-col gap-2">
                     <span className="text-white/70 uppercase text-xs font-bold tracking-widest">Playlist</span>
-                    <h1 className="text-white text-5xl md:text-7xl font-black">{selectedPLaylist?.name || "Select a Playlist"}</h1>
+                    {isGettingAudios && !selectedPLaylist?.name ? (
+                        <Skeleton className="h-12 w-64 md:h-16 md:w-96" />
+                    ) : (
+                        <h1 className="text-white text-5xl md:text-7xl font-black">{selectedPLaylist?.name || "Select a Playlist"}</h1>
+                    )}
                     <div className="flex items-center gap-2 text-white/60 text-sm mt-4">
-                        <span className="font-bold text-white">{}</span>
-                        <span>•</span>
-                        <span>{audios.length} {audios.length === 1 ? 'audio' : 'audios'}</span>
+                        {isGettingAudios ? (
+                            <Skeleton className="h-4 w-32" />
+                        ) : (
+                            <>
+                                <span className="font-bold text-white">{}</span>
+                                <span>•</span>
+                                <span>{audios.length} {audios.length === 1 ? 'audio' : 'audios'}</span>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -77,13 +87,31 @@ const Playlist = () => {
             {/* Audio List or Empty State */}
             <div className="px-4">
                 {isGettingAudios ? (
-                    <div className="flex flex-col gap-4 items-center justify-center py-20">
-                        <Skeleton className="w-full h-10" />
-                        <Skeleton className="w-full h-10" />
-                        <Skeleton className="w-full h-10" />
-                        <Skeleton className="w-full h-10" />
-                        <Skeleton className="w-full h-10" />
-                    </div>
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-white/5 hover:bg-transparent">
+                                <TableHead className="w-12"><Skeleton className="h-4 w-4" /></TableHead>
+                                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                <TableHead><Skeleton className="h-4 w-10" /></TableHead>
+                                <TableHead className="w-12"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i} className="border-none hover:bg-transparent">
+                                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-2">
+                                            <Skeleton className="h-4 w-48" />
+                                            <Skeleton className="h-3 w-20" />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell><Skeleton className="h-4 w-10" /></TableCell>
+                                    <TableCell><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 ) : audios.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4 bg-white/5 rounded-3xl border border-dashed border-white/10">
                         <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-2">

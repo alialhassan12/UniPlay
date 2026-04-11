@@ -29,7 +29,13 @@ const useAudioStore=create<audioStore>((set)=>({
     })=>{
         set({isAddingAudio:true});
         try {
-            const response=await axiosInstance.post('/audio/add',{playlist_id,title,audio_url});
+            const response=await axiosInstance.post('/audio/add',{playlist_id,title,audio_url},{
+                onUploadProgress(progressEvent) {
+                    if(!progressEvent.total) return;
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total));
+                    set({uploadProgress:percentCompleted});
+                },
+            });
             set((state)=>({audios:[...state.audios,response.data.audio]}));
             toast.success("Audio added successfully!");
         } catch (error:any) {
@@ -37,8 +43,10 @@ const useAudioStore=create<audioStore>((set)=>({
             toast.error(error?.response?.data?.message);
         } finally{
             set({isAddingAudio:false});
+            set({uploadProgress:0});
         }
     },
+    
     isGettingAudios:false,
     getAudios:async(playlist_id:number)=>{
         set({isGettingAudios:true});
@@ -85,6 +93,7 @@ const useAudioStore=create<audioStore>((set)=>({
             toast.error(error?.response?.data?.message);
         } finally{
             set({isUploadingAudioFile:false});
+            set({uploadProgress:0});
         }
     },
 }));

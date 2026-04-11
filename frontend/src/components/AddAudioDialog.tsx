@@ -185,7 +185,7 @@ const AddAudioDialog = ({ open, onOpenChange }: { open: boolean, onOpenChange: (
                     <div className="flex flex-col px-6">
                         <div className="flex justify-between items-center p-2">
                             <span className="text-white/60 text-xs font-bold uppercase tracking-widest">Uploading in progress</span>
-                            <span className="text-white/60 text-xs font-bold uppercase tracking-widest">{uploadProgress}%</span>
+                            <span className="text-white/60 text-xs font-bold uppercase tracking-widest">{uploadProgress===100?'Processing...':uploadProgress+'%'}</span>
                         </div>
                         <Progress value={uploadProgress} className="mb-3" />
                     </div>

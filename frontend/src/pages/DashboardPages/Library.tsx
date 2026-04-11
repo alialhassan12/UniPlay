@@ -24,15 +24,17 @@ const Library=()=>{
         <>
             <h1 className="text-white text-2xl font-bold mb-6">Your Library</h1>
             <div className="flex flex-row flex-wrap gap-4">
-                {
-                    playlists.length==0 && isFetchingPlaylists &&(
-                        <>
-                            <Skeleton className="w-48 h-48 mb-2 rounded-2xl" />
-                            <Skeleton className="w-48 h-48 mb-2 rounded-2xl" />
-                            <Skeleton className="w-48 h-48 mb-2 rounded-2xl" />
-                        </>
-                    ) 
-                }
+                {isFetchingPlaylists && playlists.length === 0 && (
+                    <>
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="flex flex-col gap-3 group">
+                                <Skeleton className="w-48 h-48 rounded-[2rem]" />
+                                <Skeleton className="w-32 h-4 mx-auto rounded-full" />
+                            </div>
+                        ))}
+                    </>
+                )}
+                
                 {playlists.map((playlist)=>{
                     return(
                         <div 

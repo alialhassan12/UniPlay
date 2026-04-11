@@ -5,7 +5,7 @@ const axiosInstance = axios.create({
     headers: {
         "Accept": "application/json",
     },
-    withCredentials: true,
+    // withCredentials: true,
 });
 axiosInstance.interceptors.request.use(
     (config) => {
