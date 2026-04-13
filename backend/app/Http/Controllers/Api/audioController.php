@@ -23,7 +23,7 @@ class audioController extends Controller
         $url = $request->audio_url;
         $uniqueId = uniqid('audio_');
         $folder = 'app/public/audio';
-        
+
         // Ensure the directory exists
         if (!file_exists(storage_path($folder))) {
             mkdir(storage_path($folder), 0777, true);
@@ -31,21 +31,21 @@ class audioController extends Controller
 
         // Use a unique name to easily find the file later
         $storage_path_template = storage_path($folder . '/' . $uniqueId . '.%(ext)s');
-        
+
         $escapedUrl = escapeshellarg($url);
         $command = "yt-dlp --js-runtimes node -f bestaudio -o \"$storage_path_template\" $escapedUrl 2>&1";
-        
+
         $output = [];
         $returnCode = 0;
         exec($command, $output, $returnCode);
 
         // Find the downloaded file (it might have different extensions like .webm, .m4a)
         $files = glob(storage_path($folder . '/' . $uniqueId . '.*'));
-        
+
         if (empty($files) || $returnCode !== 0) {
             $errorOutput = implode("\n", $output);
             Log::error("yt-dlp download failed. Return code: $returnCode. Output: $errorOutput");
-            
+
             return response()->json([
                 'message' => 'Failed to download audio. Please check the URL or try again later.',
                 'debug' => config('app.debug') ? $errorOutput : null,
@@ -80,39 +80,101 @@ class audioController extends Controller
         ]);
     }
 
-    public function getAudios($playlist_id){
-        $audios=Audios::where('playlist_id',$playlist_id)->get();
+    public function getAudios($playlist_id)
+    {
+        $audios = Audios::where('playlist_id', $playlist_id)->get();
         return response()->json([
-            'audios'=>$audios
+            'audios' => $audios
         ]);
     }
 
-    public function uploadAudioFile(Request $request){
+    public function uploadAudioFile(Request $request)
+    {
         $request->validate([
             "playlist_id" => 'required|exists:playlists,id',
             "title" => 'required|string',
             "duration" => 'nullable|integer',
-            "audio_file"=>'required|file|mimes:mp3,wav,m4a,aac,ogg,flac,webm'
+            "audio_file" => 'required|file|mimes:mp3,wav,m4a,aac,ogg,flac,webm'
         ]);
         // upload to cloudinary
-        $cloudinary=new CloudinaryService();
-        $audio_url=$cloudinary->uploadAudio($request->file('audio_file')->getRealPath());
-        if(!$audio_url){
+        $cloudinary = new CloudinaryService();
+        $audio_url = $cloudinary->uploadAudio($request->file('audio_file')->getRealPath());
+        if (!$audio_url) {
             Log::error('Failed to upload audio to Cloudinary storage.');
             return response()->json([
-                'message'=>"Failed to upload audio"
-            ],500);
+                'message' => "Failed to upload audio"
+            ], 500);
         }
         // save to database
-        $audio=Audios::create([
-            'playlist_id'=>$request->playlist_id,
-            'title'=>$request->title,
-            'duration'=>$request->duration ?? 0,
-            'audio_url'=>$audio_url,
+        $audio = Audios::create([
+            'playlist_id' => $request->playlist_id,
+            'title' => $request->title,
+            'duration' => $request->duration ?? 0,
+            'audio_url' => $audio_url,
         ]);
         return response()->json([
-            'message'=>"Audio added successfully",
-            'audio'=>$audio,
+            'message' => "Audio added successfully",
+            'audio' => $audio,
+        ]);
+    }
+
+    public function renameAudio(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string'
+        ]);
+        $user=auth('sanctum')->user();
+        $audio = Audios::whereId($id)->with('playlist')->first();
+
+        if (!$audio) {
+            return response()->json([
+                'message' => "Audio not found"
+            ]);
+        }
+        
+        if($user->id !== $audio->playlist->user_id){
+            return response()->json([
+                'message' => "You are not authorized to perform this action"
+            ],403);
+        }
+
+
+        $audio->title = $request->title;
+        $audio->save();
+
+        return response()->json([
+            'message' => "title updated successfully",
+            'audio' => $audio,
+        ]);
+    }
+
+    public function changeAudioPlaylist(Request $request, $id)
+    {
+        $request->validate([
+            'playlist_id' => 'required|exists:playlists,id'
+        ]);
+
+        $audio = Audios::whereId($id)->with('playlist')->first();
+        $user=auth('sanctum')->user();
+
+        if (!$audio) {
+            return response()->json([
+                'message' => "Audio not found"
+            ]);
+        }
+
+        if($user->id !== $audio->playlist->user_id){
+            return response()->json([
+                'message' => "You are not authorized to perform this action"
+            ],403);
+        }
+
+        $audio->playlist_id = $request->playlist_id;
+        $audio->save();
+
+        return response()->json([
+            'message' => "Moved Successfully",
+            'audio' => $audio
         ]);
     }
 }

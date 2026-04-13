@@ -1,6 +1,6 @@
 import useAudioStore from "@/stores/audioStore";
 import usePlaylistsStore from "@/stores/playlistsStore";
-import { Clock, Music, Play, Plus, Search, Trash2, MoreHorizontal } from "lucide-react";
+import { Clock, Music, Play, Plus, Search, Trash2, MoreHorizontal, Edit, Trash, Move } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -10,14 +10,27 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table.tsx";
+import {
+    Popover,
+    PopoverContent,
+    PopoverDescription,
+    PopoverHeader,
+    PopoverTitle,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 import AddAudioDialog from "@/components/AddAudioDialog";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import RenameAudioDialog from "@/components/RenameAudioDialog";
+
 
 const Playlist = () => {
     const { selectedPLaylist } = usePlaylistsStore();
-    const { audios,getAudios,isGettingAudios,setSelectedAudio } = useAudioStore();
+    const { audios,getAudios,isGettingAudios,setSelectedAudio,isMovingAudio,moveToPlaylist,selectedAudio } = useAudioStore();
+    const {playlists}=usePlaylistsStore();
     const [openAddAudioDialog,setOpenAddAudioDialog]=useState(false);
+    const [openRenameDialog,setOpenRenameDialog]=useState(false);
+    const [search,setSearch]=useState('');
     
     useEffect(()=>{
         if(selectedPLaylist){
@@ -68,6 +81,8 @@ const Playlist = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-emerald-500 transition-colors" />
                     <input 
                         type="text" 
+                        value={search}
+                        onChange={(e)=>setSearch(e.target.value)}
                         placeholder="Search in playlist"
                         className="bg-white/5 border-none rounded-full py-2 pl-10 pr-4 text-sm text-white focus:ring-1 focus:ring-emerald-500 w-64 outline-none transition-all"
                     />
@@ -140,7 +155,8 @@ const Playlist = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {audios.map((audio, index) => (
+                            {/* filter audios by search */}
+                            {audios.filter((audio)=>audio.title.toLowerCase().includes(search.toLowerCase())).map((audio, index) => (    
                                 <TableRow 
                                     key={audio.id} 
                                     onClick={()=>setSelectedAudio(audio)}
@@ -159,14 +175,59 @@ const Playlist = () => {
                                         {formatDuration(audio.duration)}
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-2 hover:text-red-500 text-white/50 transition-colors">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                            <button className="p-2 hover:text-white text-white/50 transition-colors">
-                                                <MoreHorizontal className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                        <Popover>
+                                            <PopoverTrigger>
+                                                <div className="flex items-center gap-2 opacity-100 ">
+                                                    <button className="p-2 hover:text-white text-white/50 transition-colors cursor-pointer">
+                                                        <MoreHorizontal className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </PopoverTrigger>
+                                            <PopoverContent>
+                                                    <PopoverHeader>
+                                                        <PopoverTitle>More Options</PopoverTitle>
+                                                        <PopoverDescription>Update Or Delete <span className="text-emerald-500">{audio.title}</span>.</PopoverDescription>
+                                                    </PopoverHeader>
+                                                    {/* edit buttons */}
+                                                    <Button 
+                                                        className="bg-blue-400 text-black hover:bg-blue-500 "
+                                                        onClick={()=>setOpenRenameDialog(true)}
+                                                        >
+                                                        <Edit/>Rename
+                                                    </Button>
+                                                    {/* move to playlist popover */}
+                                                    <Popover>
+                                                        <PopoverTrigger>
+                                                            <Button className="bg-green-400 w-full text-black hover:bg-green-500 ">
+                                                                <Move/>Move to playlist
+                                                            </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent side="left">
+                                                            <PopoverHeader>
+                                                                <PopoverTitle>Your Playlists</PopoverTitle>
+                                                                <PopoverDescription>Move <span className="text-emerald-500">{audio.title}</span> to :</PopoverDescription>
+                                                            </PopoverHeader>
+                                                            {playlists.map((playlist)=>{
+                                                                if(playlist.id === selectedPLaylist?.id) return null;
+                                                                return(
+                                                                    <Button 
+                                                                        disabled={isMovingAudio}
+                                                                        onClick={()=>moveToPlaylist(playlist.id,audio.id)}
+                                                                    >
+                                                                        {playlist.name}
+                                                                        {isMovingAudio && <span className="loading loading-ring loading-md"></span>}
+                                                                    </Button>
+                                                                );
+                                                            })}
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                    {/* delete button */}
+                                                    <Button className="bg-red-400 text-black hover:bg-red-500">
+                                                        <Trash/>Delete 
+                                                    </Button>
+                                            </PopoverContent>
+                                            </Popover>
+                                        
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -175,6 +236,7 @@ const Playlist = () => {
                 )}
             </div>
             <AddAudioDialog open={openAddAudioDialog} onOpenChange={setOpenAddAudioDialog}/>
+            <RenameAudioDialog open={openRenameDialog} setOpen={setOpenRenameDialog} audioId={selectedAudio!.id}/>
         </div>
     );
 };

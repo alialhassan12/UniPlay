@@ -1,6 +1,5 @@
 import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -13,6 +12,7 @@ import { useState } from "react";
 import usePlaylistsStore from "@/stores/playlistsStore";
 import useAuthStore from "@/stores/authStore";
 import { toast } from "sonner";
+import { Button } from "./ui/button";
 
 const CreatePlaylistDialog =({open,onOpenChange}:{open:boolean,onOpenChange:(open:boolean)=>void})=>{
     const [playlistName,setPlaylistName]=useState('');
@@ -48,13 +48,13 @@ const CreatePlaylistDialog =({open,onOpenChange}:{open:boolean,onOpenChange:(ope
                     <AlertDialogCancel onClick={()=>onOpenChange(false)} className="text-white">
                         Cancel
                     </AlertDialogCancel>
-                    <AlertDialogAction onClick={handlePlaylistCreation} className="text-white">
+                    <Button onClick={handlePlaylistCreation} className="text-white">
                         {isCreatingPlaylist?
                             <span className="loading loading-ring loading-sm"></span>
                             :
                             'Create'
                         }
-                    </AlertDialogAction>
+                    </Button>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

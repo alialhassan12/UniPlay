@@ -15,6 +15,10 @@ interface audioStore{
     uploadAudioFile:({playlist_id,title,audio_file}:{playlist_id:number,title:string,audio_file:File})=>void;
     isUploadingAudioFile:boolean;
     uploadProgress:number;
+    moveToPlaylist:(playlist_id:number,id:number)=>void;
+    isMovingAudio:boolean;
+    renameAudio:(title:string,id:number)=>void;
+    isRenamingAudio:boolean;
 }
 
 const useAudioStore=create<audioStore>((set)=>({
@@ -50,11 +54,13 @@ const useAudioStore=create<audioStore>((set)=>({
     isGettingAudios:false,
     getAudios:async(playlist_id:number)=>{
         set({isGettingAudios:true});
+        set({audios:[]});
         try{
             const response=await axiosInstance.get(`/audio/${playlist_id}`);
             set({audios:response.data.audios});
         }catch(error:any){
             console.log(error);
+            set({audios:[]});
             toast.error(error?.response?.data?.message);
         } finally{
             set({isGettingAudios:false});
@@ -96,6 +102,36 @@ const useAudioStore=create<audioStore>((set)=>({
             set({uploadProgress:0});
         }
     },
+
+    isMovingAudio:false,
+    moveToPlaylist:async (playlist_id:number,id:number)=>{
+        set({isMovingAudio:true});
+        try {
+            const response=await axiosInstance.post(`/audio/move/to/${id}`,{playlist_id});
+            set((state)=>({audios:state.audios.filter(audio=>audio.id !== response.data.audio.id)}));
+            toast.success(response.data.message);
+        } catch (error:any) {
+            console.log(error);
+            toast.error(error?.response?.data?.message);
+        } finally{
+            set({isMovingAudio:false});
+        }
+    },
+
+    isRenamingAudio:false,
+    renameAudio:async(title:string,id:number)=>{
+        set({isRenamingAudio:true});
+        try {
+            const response=await axiosInstance.post(`/audio/rename/${id}`,{title});
+            set((state)=>({audios:state.audios.map(audio=>audio.id === response.data.audio.id ? response.data.audio : audio)}));
+            toast.success(response.data.message);
+        } catch (error:any) {
+            console.log(error);
+            toast.error(error?.response?.data?.message);
+        } finally{
+            set({isRenamingAudio:false});
+        }
+    }
 }));
 
 export default useAudioStore;

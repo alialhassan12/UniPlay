@@ -20,4 +20,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/audio/add',[audioController::class,'addAudio'])->name('addAudio');
     Route::get('/audio/{playlist_id}',[audioController::class,'getAudios'])->name('getAudios');
     Route::post('/audio/upload',[audioController::class,'uploadAudioFile'])->name('uploadAudioFile');
+    Route::post('/audio/move/to/{id}',[audioController::class,'changeAudioPlaylist'])->name('move audio to playlist');
+    Route::post('/audio/rename/{id}',[audioController::class,'renameAudio'])->name('rename audio');
 });
