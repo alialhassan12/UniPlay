@@ -19,6 +19,8 @@ interface audioStore{
     isMovingAudio:boolean;
     renameAudio:(title:string,id:number)=>void;
     isRenamingAudio:boolean;
+    deleteAudio:(id:number)=>void;
+    isDeletingAudio:boolean;
 }
 
 const useAudioStore=create<audioStore>((set)=>({
@@ -130,6 +132,21 @@ const useAudioStore=create<audioStore>((set)=>({
             toast.error(error?.response?.data?.message);
         } finally{
             set({isRenamingAudio:false});
+        }
+    },
+
+    isDeletingAudio:false,
+    deleteAudio:async(id:number)=>{
+        set({isDeletingAudio:true});
+        try{
+            const response=await axiosInstance.delete(`/audio/delete/${id}`);
+            set((state)=>({audios:state.audios.filter(audio=>audio.id !== id)}));
+            toast.success(response.data.message);
+        }catch(error:any){
+            console.log(error);
+            toast.error(error?.response?.data?.message);
+        }finally{
+            set({isDeletingAudio:false});
         }
     }
 }));

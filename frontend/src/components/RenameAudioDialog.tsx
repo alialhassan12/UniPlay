@@ -15,7 +15,7 @@ import { Button } from "./ui/button";
 interface renameAudioInterface{
     open:boolean;
     setOpen:(open:boolean)=>void;
-    audioId:number;
+    audioId:number | undefined;
 }
 
 
@@ -56,7 +56,7 @@ const RenameAudioDialog = ({open,setOpen,audioId}:renameAudioInterface) => {
                 <AlertDialogFooter>
                     <AlertDialogCancel disabled={isRenamingAudio}>Cancel</AlertDialogCancel>
                     <Button 
-                        onClick={()=>handleRename(title,audioId)}
+                        onClick={()=>handleRename(title,audioId!)}
                         disabled={isRenamingAudio}
                     >
                         {isRenamingAudio 

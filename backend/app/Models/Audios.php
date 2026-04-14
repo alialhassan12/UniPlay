@@ -11,6 +11,7 @@ class Audios extends Model
         'title',
         'duration',
         'audio_url',
+        'public_id',
     ];
 
     public function playlist(){

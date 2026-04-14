@@ -37,7 +37,11 @@ class CloudinaryService
                 'resource_type' => 'video',
                 'chunk_size' => 6000000, // 6MB chunks
             ]);
-            return $result['secure_url'];
+            return [
+                'url'=>$result['secure_url'],
+                'public_id'=>$result['public_id'],
+                'duration'=>$result['duration'] ?? 0,
+            ];
         } catch (\Exception $e) {
             Log::error('Cloudinary upload error: ' . $e->getMessage());
             Log::error('File path: ' . $filePath);
@@ -45,6 +49,17 @@ class CloudinaryService
                 Log::error('File size: ' . filesize($filePath) . ' bytes');
             }
             return null;
+        }
+    }
+    public function deleteAudio($public_id){
+        try{
+            $this->cloudinary->uploadApi()->destroy($public_id, [
+                'resource_type' => 'video',
+            ]);
+            return true;
+        }catch(\Exception $e){
+            Log::error('Cloudinary delete error: ' . $e->getMessage());
+            return false;
         }
     }
 }

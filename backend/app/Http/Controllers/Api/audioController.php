@@ -56,11 +56,11 @@ class audioController extends Controller
 
         // upload to cloudinary
         $cloudinary = new CloudinaryService();
-        $audio_url = $cloudinary->uploadAudio($latestFile);
+        $cloudinary_response = $cloudinary->uploadAudio($latestFile);
 
         unlink($latestFile);
 
-        if (!$audio_url) {
+        if (!$cloudinary_response) {
             return response()->json([
                 'message' => 'Failed to upload audio to Cloudinary storage.',
             ], 500);
@@ -70,8 +70,9 @@ class audioController extends Controller
         $audio = Audios::create([
             'playlist_id' => $request->playlist_id,
             'title' => $request->title,
-            'duration' => $request->duration ?? 0,
-            'audio_url' => $audio_url,
+            'duration' => (int) round($cloudinary_response['duration']),
+            'audio_url' => $cloudinary_response['url'],
+            'public_id' => $cloudinary_response['public_id'],
         ]);
 
         return response()->json([
@@ -98,20 +99,24 @@ class audioController extends Controller
         ]);
         // upload to cloudinary
         $cloudinary = new CloudinaryService();
-        $audio_url = $cloudinary->uploadAudio($request->file('audio_file')->getRealPath());
-        if (!$audio_url) {
+        $cloudinary_response = $cloudinary->uploadAudio($request->file('audio_file')->getRealPath());
+        
+        if (!$cloudinary_response) {
             Log::error('Failed to upload audio to Cloudinary storage.');
             return response()->json([
                 'message' => "Failed to upload audio"
             ], 500);
         }
+        
         // save to database
         $audio = Audios::create([
             'playlist_id' => $request->playlist_id,
             'title' => $request->title,
-            'duration' => $request->duration ?? 0,
-            'audio_url' => $audio_url,
+            'duration' => (int) round($cloudinary_response['duration']),
+            'audio_url' => $cloudinary_response['url'],
+            'public_id' => $cloudinary_response['public_id'],
         ]);
+
         return response()->json([
             'message' => "Audio added successfully",
             'audio' => $audio,
@@ -175,6 +180,37 @@ class audioController extends Controller
         return response()->json([
             'message' => "Moved Successfully",
             'audio' => $audio
+        ]);
+    }
+
+    public function deleteAudio($id){
+        $audio=Audios::whereId($id)->with('playlist')->first();
+        $user=auth('sanctum')->user();
+
+        if(!$audio){
+            return response()->json([
+                'message' => "Audio not found"
+            ]);
+        }
+
+        if($user->id !== $audio->playlist->user_id){
+            return response()->json([
+                'message' => "You are not authorized to perform this action"
+            ],403);
+        }
+
+        $cloudinary=new CloudinaryService();
+        if(!$cloudinary->deleteAudio($audio->public_id)){
+            Log::error("Failed to delete audio from Cloudinary storage.");
+            return response()->json([
+                'message' => "Failed to delete audio from Cloudinary storage."
+            ],500);
+        }
+        
+        $audio->delete();
+
+        return response()->json([
+            'message' => "Audio deleted successfully"
         ]);
     }
 }
