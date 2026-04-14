@@ -1,6 +1,6 @@
 import useAudioStore from "@/stores/audioStore";
 import usePlaylistsStore from "@/stores/playlistsStore";
-import { Clock, Music, Play, Plus, Search, MoreHorizontal, Edit, Trash, Move } from "lucide-react";
+import { Clock, Music, Play, Plus, Search, MoreHorizontal, Edit, Trash, Move, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Table,
@@ -36,7 +36,8 @@ const Playlist = () => {
         moveToPlaylist,
         selectedAudio,
         isDeletingAudio,
-        deleteAudio,
+        downloadAudio,
+        isDownloadingAudio
     } = useAudioStore();
     const {playlists}=usePlaylistsStore();
     const [openAddAudioDialog,setOpenAddAudioDialog]=useState(false);
@@ -198,12 +199,19 @@ const Playlist = () => {
                                                         <PopoverTitle>More Options</PopoverTitle>
                                                         <PopoverDescription>Update Or Delete <span className="text-emerald-500">{audio.title}</span>.</PopoverDescription>
                                                     </PopoverHeader>
-                                                    {/* edit buttons */}
+                                                    {/* edit button */}
                                                     <Button 
                                                         className="bg-blue-400 text-black hover:bg-blue-500 "
                                                         onClick={()=>setOpenRenameDialog(true)}
                                                         >
                                                         <Edit/>Rename
+                                                    </Button>
+                                                    {/* download button */}
+                                                    <Button 
+                                                        className="bg-blue-400 text-black hover:bg-blue-500 "
+                                                        onClick={()=>downloadAudio(audio.id,audio.title)}
+                                                        >
+                                                        {isDownloadingAudio ?<span className="loading loading-ring loading-md"></span> : <><Download className="w-4 h-4"/>Download</>}
                                                     </Button>
                                                     {/* move to playlist popover */}
                                                     <Popover>

@@ -213,4 +213,25 @@ class audioController extends Controller
             'message' => "Audio deleted successfully"
         ]);
     }
+
+    public function downloadAudio($id){
+        $audio=Audios::whereId($id)->with('playlist')->first();
+        $user=auth('sanctum')->user();
+
+        if(!$audio){
+            return response()->json([
+                'message' => "Audio not found"
+            ]);
+        }
+
+        if($user->id !== $audio->playlist->user_id){
+            return response()->json([
+                'message' => "You are not authorized to perform this action"
+            ],403);
+        }
+        // Force download from Cloudinary
+        $downloadUrl = str_replace('/upload/', '/upload/fl_attachment/', $audio->audio_url);
+
+        return redirect()->away($downloadUrl);
+    }
 }

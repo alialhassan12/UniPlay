@@ -21,6 +21,8 @@ interface audioStore{
     isRenamingAudio:boolean;
     deleteAudio:(id:number)=>void;
     isDeletingAudio:boolean;
+    downloadAudio:(id:number,title:string)=>void;
+    isDownloadingAudio:boolean;
 }
 
 const useAudioStore=create<audioStore>((set)=>({
@@ -147,6 +149,36 @@ const useAudioStore=create<audioStore>((set)=>({
             toast.error(error?.response?.data?.message);
         }finally{
             set({isDeletingAudio:false});
+        }
+    },
+
+    isDownloadingAudio:false,
+    downloadAudio:async(id:number,title:string)=>{
+        set({isDownloadingAudio:true});
+        try{
+            const response=await axiosInstance.get(`/audio/download/${id}`,
+                // this is important to get the file as blob
+                {responseType:'blob'}
+            );
+            // Create a URL for the downloaded blob
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // Use the track title for the filename
+            link.setAttribute('download', `${title}.mp3`); 
+            
+            document.body.appendChild(link);
+            link.click();
+            
+            // Cleanup
+            link.parentNode?.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }catch(error:any){
+            console.log(error);
+            toast.error(error?.response?.data?.message);
+        }finally{
+            set({isDownloadingAudio:false});
         }
     }
 }));
