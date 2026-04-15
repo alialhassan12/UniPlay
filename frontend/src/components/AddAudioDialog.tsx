@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "./ui/input";
 import { useState } from "react";
-import { Music, Link, Plus, Sparkles, Loader2 } from "lucide-react";
+import { Music, Link, Plus, Sparkles } from "lucide-react";
 import useAudioStore from "@/stores/audioStore";
 import usePlaylistsStore from "@/stores/playlistsStore";
 import { toast } from "sonner";
