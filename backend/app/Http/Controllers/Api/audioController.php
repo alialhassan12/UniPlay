@@ -33,7 +33,8 @@ class audioController extends Controller
         $storage_path_template = storage_path($folder . '/' . $uniqueId . '.%(ext)s');
 
         $escapedUrl = escapeshellarg($url);
-        $command = "yt-dlp --js-runtimes node -f bestaudio -o \"$storage_path_template\" $escapedUrl 2>&1";
+        // Added --ffmpeg-location and --no-check-certificate for better compatibility in Docker
+        $command = "yt-dlp --ffmpeg-location /usr/bin/ffmpeg --no-check-certificates --js-runtimes node -f bestaudio -o \"$storage_path_template\" $escapedUrl 2>&1";
 
         $output = [];
         $returnCode = 0;
@@ -44,11 +45,14 @@ class audioController extends Controller
 
         if (empty($files) || $returnCode !== 0) {
             $errorOutput = implode("\n", $output);
-            Log::error("yt-dlp download failed. Return code: $returnCode. Output: $errorOutput");
+            Log::error("yt-dlp download failed.");
+            Log::error("Return code: $returnCode");
+            Log::error("Command: $command");
+            Log::error("Output: $errorOutput");
 
             return response()->json([
                 'message' => 'Failed to download audio. Please check the URL or try again later.',
-                'debug' => config('app.debug') ? $errorOutput : null,
+                'error_detail' => config('app.debug') ? $errorOutput : 'Check server logs for details',
             ], 500);
         }
 

@@ -23,6 +23,9 @@ RUN apt-get update && apt-get install -y \
 # Install PHP extensions
 RUN docker-php-ext-install pdo_pgsql zip gd intl bcmath opcache
 
+# Copy custom PHP configuration
+COPY php-production.ini /usr/local/etc/php/conf.d/php-production.ini
+
 # Install Node.js (needed for yt-dlp js-runtime)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
