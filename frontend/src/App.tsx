@@ -29,7 +29,7 @@ function App() {
             <Route path="/register" element={!authUser ? <Register/> : <Navigate to="/home"/>}></Route>
             <Route path="/login" element={!authUser ? <Login/> : <Navigate to="/home"/>}></Route>
             <Route path="/home" element={authUser ? <Dashboard/> : <Navigate to="/login"/>}></Route>
-            <Route path="/" element={authUser ? <Navigate to="/home"/> : <Navigate to="/login"/>}></Route>
+            <Route path="/*" element={authUser ? <Navigate to="/home"/> : <Navigate to="/login"/>}></Route>
         </Routes>
       </BrowserRouter>
       <Toaster />
