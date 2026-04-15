@@ -1,0 +1,17 @@
+/vendor
+/node_modules
+/.env
+/storage/*.key
+/public/hot
+/public/storage
+/storage/app/public
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+.git
+.github
+.editorconfig
+.phpunit.result.cache
+phpunit.xml
+tests
