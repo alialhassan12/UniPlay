@@ -34,6 +34,14 @@ class audioController extends Controller
             $url = $request->audio_url;
             $uniqueId = uniqid('audio_');
             $folder = 'app/public/audio';
+            $cookiesPath = storage_path('app/cookies_' . $uniqueId . '.txt');
+
+            // Handle YouTube Cookies from Environment Variable
+            $hasCookies = false;
+            if ($cookiesContent = env('YT_COOKIES')) {
+                file_put_contents($cookiesPath, $cookiesContent);
+                $hasCookies = true;
+            }
 
             // Ensure the directory exists
             if (!file_exists(storage_path($folder))) {
@@ -46,12 +54,18 @@ class audioController extends Controller
             $storage_path_template = storage_path($folder . '/' . $uniqueId . '.%(ext)s');
 
             $escapedUrl = escapeshellarg($url);
-            // Added --extractor-args to use ios/web clients which are more lenient on cloud IPs
-            $command = "yt-dlp --user-agent \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\" --referer \"https://www.google.com/\" --force-ipv4 --extractor-args \"youtube:player_client=ios,web\" --ffmpeg-location /usr/bin/ffmpeg --no-check-certificates --js-runtimes node -f bestaudio -o \"$storage_path_template\" $escapedUrl 2>&1";
+            // Added --cookies flag if cookies are provided
+            $cookieFlag = $hasCookies ? "--cookies " . escapeshellarg($cookiesPath) : "";
+            $command = "yt-dlp $cookieFlag --user-agent \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\" --referer \"https://www.google.com/\" --force-ipv4 --extractor-args \"youtube:player_client=ios,web\" --ffmpeg-location /usr/bin/ffmpeg --no-check-certificates --js-runtimes node -f bestaudio -o \"$storage_path_template\" $escapedUrl 2>&1";
 
             $output = [];
             $returnCode = 0;
             exec($command, $output, $returnCode);
+
+            // Clean up cookies file immediately
+            if ($hasCookies && file_exists($cookiesPath)) {
+                unlink($cookiesPath);
+            }
 
             // Find the downloaded file (it might have different extensions like .webm, .m4a)
             $files = glob(storage_path($folder . '/' . $uniqueId . '.*'));
