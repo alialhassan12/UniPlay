@@ -43,6 +43,8 @@ class audioController extends Controller
                 $hasCookies = true;
             }
 
+            $cookieFlag = $hasCookies ? "--cookies " . escapeshellarg($cookiesPath) : "";
+
             // Ensure the directory exists
             if (!file_exists(storage_path($folder))) {
                 if (!mkdir(storage_path($folder), 0777, true)) {
@@ -54,9 +56,10 @@ class audioController extends Controller
             $storage_path_template = storage_path($folder . '/' . $uniqueId . '.%(ext)s');
 
             $escapedUrl = escapeshellarg($url);
-            // Added --cookies flag if cookies are provided
-            $cookieFlag = $hasCookies ? "--cookies " . escapeshellarg($cookiesPath) : "";
-            $command = "yt-dlp $cookieFlag --user-agent \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\" --referer \"https://www.google.com/\" --force-ipv4 --extractor-args \"youtube:player_client=ios,web\" --ffmpeg-location /usr/bin/ffmpeg --no-check-certificates --js-runtimes node -f bestaudio -o \"$storage_path_template\" $escapedUrl 2>&1";
+            // Simplified command for a logged-in session (cookies)
+            // Removed player_client=ios,web because it conflicts with cookies. 
+            // Changed format to "bestaudio/best" for more reliability.
+            $command = "yt-dlp $cookieFlag --user-agent \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\" --referer \"https://www.google.com/\" --force-ipv4 --ffmpeg-location /usr/bin/ffmpeg --no-check-certificates --js-runtimes node -f \"bestaudio/best\" -o \"$storage_path_template\" $escapedUrl 2>&1";
 
             $output = [];
             $returnCode = 0;
