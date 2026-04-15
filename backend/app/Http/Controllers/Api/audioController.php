@@ -12,77 +12,98 @@ class audioController extends Controller
 {
     public function addAudio(Request $request)
     {
-        set_time_limit(300); // 5 minutes
-        $request->validate([
-            "playlist_id" => 'required|exists:playlists,id',
-            "title" => 'required|string',
-            "duration" => 'nullable|integer',
-            "audio_url" => 'required|url',
-        ]);
+        try {
+            set_time_limit(300); // 5 minutes
+            
+            // Log entry point to verify the request is reaching the controller
+            Log::info("addAudio started for URL: " . $request->audio_url);
 
-        $url = $request->audio_url;
-        $uniqueId = uniqid('audio_');
-        $folder = 'app/public/audio';
+            $request->validate([
+                "playlist_id" => 'required|exists:playlists,id',
+                "title" => 'required|string',
+                "duration" => 'nullable|integer',
+                "audio_url" => 'required|url',
+            ]);
 
-        // Ensure the directory exists
-        if (!file_exists(storage_path($folder))) {
-            mkdir(storage_path($folder), 0777, true);
-        }
+            // Verify yt-dlp location
+            $ytDlpPath = shell_exec('which yt-dlp') ? trim(shell_exec('which yt-dlp')) : 'NOT FOUND';
+            if ($ytDlpPath === 'NOT FOUND') {
+                throw new \Exception("yt-dlp binary not found in system PATH. Check Dockerfile installation.");
+            }
 
-        // Use a unique name to easily find the file later
-        $storage_path_template = storage_path($folder . '/' . $uniqueId . '.%(ext)s');
+            $url = $request->audio_url;
+            $uniqueId = uniqid('audio_');
+            $folder = 'app/public/audio';
 
-        $escapedUrl = escapeshellarg($url);
-        // Added standard reliability flags: User-Agent and force-ipv4
-        $command = "yt-dlp --user-agent \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\" --force-ipv4 --ffmpeg-location /usr/bin/ffmpeg --no-check-certificates --js-runtimes node -f bestaudio -o \"$storage_path_template\" $escapedUrl 2>&1";
+            // Ensure the directory exists
+            if (!file_exists(storage_path($folder))) {
+                if (!mkdir(storage_path($folder), 0777, true)) {
+                    throw new \Exception("Failed to create storage directory: " . storage_path($folder));
+                }
+            }
 
-        $output = [];
-        $returnCode = 0;
-        exec($command, $output, $returnCode);
+            // Use a unique name to easily find the file later
+            $storage_path_template = storage_path($folder . '/' . $uniqueId . '.%(ext)s');
 
-        // Find the downloaded file (it might have different extensions like .webm, .m4a)
-        $files = glob(storage_path($folder . '/' . $uniqueId . '.*'));
+            $escapedUrl = escapeshellarg($url);
+            // Added standard reliability flags: User-Agent and force-ipv4
+            $command = "yt-dlp --user-agent \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\" --force-ipv4 --ffmpeg-location /usr/bin/ffmpeg --no-check-certificates --js-runtimes node -f bestaudio -o \"$storage_path_template\" $escapedUrl 2>&1";
 
-        if (empty($files) || $returnCode !== 0) {
-            $errorOutput = implode("\n", $output);
-            Log::error("yt-dlp download failed.");
-            Log::error("Return code: $returnCode");
-            Log::error("Command: $command");
-            Log::error("Output: $errorOutput");
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
+
+            // Find the downloaded file (it might have different extensions like .webm, .m4a)
+            $files = glob(storage_path($folder . '/' . $uniqueId . '.*'));
+
+            if (empty($files) || $returnCode !== 0) {
+                $errorOutput = implode("\n", $output);
+                Log::error("yt-dlp download failed. Return code: $returnCode. Path: $ytDlpPath");
+                
+                return response()->json([
+                    'message' => 'Failed to download audio. Please check the URL or try again later.',
+                    'yt_dlp_path' => $ytDlpPath,
+                    'yt_dlp_output' => $errorOutput,
+                    'return_code' => $returnCode
+                ], 500);
+            }
+
+            $latestFile = $files[0];
+
+            // upload to cloudinary
+            $cloudinary = new CloudinaryService();
+            $cloudinary_response = $cloudinary->uploadAudio($latestFile);
+
+            if (file_exists($latestFile)) {
+                unlink($latestFile);
+            }
+
+            if (!$cloudinary_response) {
+                throw new \Exception("Failed to upload audio to Cloudinary storage.");
+            }
+
+            // save to database only if upload succeeded
+            $audio = Audios::create([
+                'playlist_id' => $request->playlist_id,
+                'title' => $request->title,
+                'duration' => (int) round($cloudinary_response['duration']),
+                'audio_url' => $cloudinary_response['url'],
+                'public_id' => $cloudinary_response['public_id'],
+            ]);
 
             return response()->json([
-                'message' => 'Failed to download audio. Please check the URL or try again later.',
-                'error_detail' => config('app.debug') ? $errorOutput : 'Check server logs for details',
-            ], 500);
-        }
+                'message' => 'Audio added successfully',
+                'audio' => $audio,
+            ]);
 
-        $latestFile = $files[0];
-
-        // upload to cloudinary
-        $cloudinary = new CloudinaryService();
-        $cloudinary_response = $cloudinary->uploadAudio($latestFile);
-
-        unlink($latestFile);
-
-        if (!$cloudinary_response) {
+        } catch (\Exception $e) {
+            Log::error("CRITICAL ERROR in addAudio: " . $e->getMessage());
             return response()->json([
-                'message' => 'Failed to upload audio to Cloudinary storage.',
+                'message' => 'Internal Server Error during audio processing.',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ], 500);
         }
-
-        // save to database only if upload succeeded
-        $audio = Audios::create([
-            'playlist_id' => $request->playlist_id,
-            'title' => $request->title,
-            'duration' => (int) round($cloudinary_response['duration']),
-            'audio_url' => $cloudinary_response['url'],
-            'public_id' => $cloudinary_response['public_id'],
-        ]);
-
-        return response()->json([
-            'message' => 'Audio added successfully',
-            'audio' => $audio,
-        ]);
     }
 
     public function getAudios($playlist_id)
