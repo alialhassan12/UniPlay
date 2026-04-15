@@ -15,10 +15,13 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     ffmpeg \
     libpq-dev \
+    libxml2-dev \
+    libonig-dev \
+    libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_pgsql zip gd
+RUN docker-php-ext-install pdo_pgsql zip gd intl bcmath opcache
 
 # Install Node.js (needed for yt-dlp js-runtime)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
